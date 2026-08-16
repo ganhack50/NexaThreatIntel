@@ -35,34 +35,18 @@ try:
 except Exception as e:
     print(f"[-] Error fetching domains: {e}")
 
-# 3. Fetch Bulk Hashes from an active plain-text repository source
+# 3. Fetch Active Zero-Day Hashes from MalwareBazaar
 try:
-    print("[*] Downloading bulk malware hashes...")
-    # Using a reliable public raw text source aggregating active indicators
-    hash_url = "https://raw.githubusercontent.com/OTDT/threat-intel/main/hashes/latest.txt"
-    res = requests.get(hash_url, timeout=20)
+    print("[*] Downloading active zero-day hashes...")
+    res = requests.get("https://bazaar.abuse.ch/export/txt/sha256/recent/", timeout=15)
     if res.status_code == 200:
         for line in res.text.splitlines():
             line = line.strip().lower()
-            # Look for standard 64-character SHA-256 strings
-            if len(line) == 64 and all(c in "0123456789abcdef" for c in line):
-                hashes.add(line)
-except Exception as e:
-    print(f"[-] Error fetching bulk hashes: {e}")
-
-# Fallback mechanism: if the external list is temporarily unreachable, pull a secondary public collection
-if len(hashes) < 10:
-    try:
-        print("[*] Falling back to secondary hash feed...")
-        fallback_url = "https://urlabuse.com/public/data/malware_url.txt" # or alternate open lists
-        res = requests.get("https://raw.githubusercontent.com/AbuseIPDB/key-hold/master/hashes.txt", timeout=15)
-        if res.status_code == 200:
-            for line in res.text.splitlines():
-                line = line.strip().lower()
-                if len(line) == 64:
+            if line and not line.startswith("#"):
+                if len(line) == 64 and all(c in "0123456789abcdef" for c in line):
                     hashes.add(line)
-    except Exception:
-        pass
+except Exception as e:
+    print(f"[-] Error fetching hashes: {e}")
 
 # Guaranteed safety baselines
 ips.add("198.51.100.50")
