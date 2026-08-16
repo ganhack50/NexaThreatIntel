@@ -35,20 +35,24 @@ try:
 except Exception as e:
     print(f"[-] Error fetching domains: {e}")
 
-# 3. Fetch Real Malware Hashes from MalwareBazaar (Recent SHA-256 text feed)
+# 3. Fetch Bulk Hashes from an Open-Source Threat Feed Collection
 try:
-    print("[*] Downloading malware hash feed...")
-    hash_url = "https://bazaar.abuse.ch/export/txt/sha256/recent/"
-    res = requests.get(hash_url, timeout=15)
-    if res.status_code == 200:
-        for line in res.text.splitlines():
-            line = line.strip()
-            # Skip comment lines starting with #
-            if line and not line.startswith("#"):
-                if len(line) == 64:  # Valid SHA-256 length
-                    hashes.add(line.lower())
+    print("[*] Downloading bulk malware hash collection...")
+    # Pulling from a public community IOC repository containing multi-thousand hash lists
+    hash_sources = [
+        "https://raw.githubusercontent.com/ULHala/Malware-IOCs/main/hashes.txt",
+        "https://raw.githubusercontent.com/drwatson1/Malware-IOCs/master/hashes.txt"
+    ]
+    
+    for url in hash_sources:
+        res = requests.get(url, timeout=15)
+        if res.status_code == 200:
+            for line in res.text.splitlines():
+                line = line.strip().lower()
+                if len(line) == 64 and all(c in "0123456789abcdef" for c in line):
+                    hashes.add(line)
 except Exception as e:
-    print(f"[-] Error fetching hashes: {e}")
+    print(f"[-] Error fetching bulk hashes: {e}")
 
 # Guaranteed safety baselines
 ips.add("198.51.100.50")
