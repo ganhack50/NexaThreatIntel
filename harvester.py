@@ -1,5 +1,7 @@
 import requests
 import os
+import zipfile
+import io
 
 print("[*] Fetching MASSIVE global threat intel feeds...")
 
@@ -35,24 +37,33 @@ try:
 except Exception as e:
     print(f"[-] Error fetching domains: {e}")
 
-# 3. Fetch ALL Global Hashes (No platform filters)
+# 3. Bypass Pagination: Download and Extract the FULL Zipped Database
 try:
-    print("[*] Downloading global cross-platform malware hashes...")
-    res = requests.get("https://bazaar.abuse.ch/export/txt/sha256/recent/", timeout=15)
+    print("[*] Bypassing pagination: Downloading FULL zipped hash database...")
+    # This pulls the massive bulk dump directly
+    res = requests.get("https://bazaar.abuse.ch/export/txt/sha256/full/", timeout=60)
     if res.status_code == 200:
-        for line in res.text.splitlines():
-            line = line.strip().lower()
-            # Grab every valid SHA-256 hash, ignoring comments
-            if line and not line.startswith("#"):
-                if len(line) == 64 and all(c in "0123456789abcdef" for c in line):
-                    hashes.add(line)
+        # Unzip the payload in memory (no files written to disk yet)
+        with zipfile.ZipFile(io.BytesIO(res.content)) as z:
+            for filename in z.namelist():
+                if filename.endswith(".txt"):
+                    print(f"[*] Extracting {filename} from zip...")
+                    with z.open(filename) as f:
+                        for line in f:
+                            line = line.decode('utf-8').strip().lower()
+                            if line and not line.startswith("#") and len(line) == 64:
+                                hashes.add(line)
 except Exception as e:
-    print(f"[-] Error fetching hashes: {e}")
+    print(f"[-] Error fetching bulk hashes: {e}")
 
 # Guaranteed safety baselines
 ips.add("198.51.100.50")
 domains.add("malware-test.nexasecurity.local")
 hashes.add("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+
+# GitHub blocks files over 100MB. 500,000 hashes is ~32MB. 
+MAX_HASHES = 500000
+final_hashes = list(hashes)[:MAX_HASHES]
 
 # Save Network IPs
 os.makedirs("feeds/network", exist_ok=True)
@@ -66,6 +77,6 @@ with open("feeds/network/domains.txt", "w") as f:
 # Save Malicious Hashes for Disk AV
 os.makedirs("feeds/disk", exist_ok=True)
 with open("feeds/disk/hashes.txt", "w") as f:
-    f.write("\n".join(sorted(hashes)))
+    f.write("\n".join(sorted(final_hashes)))
 
-print(f"[+] Harvest Complete: {len(ips)} IPs, {len(domains)} Domains, {len(hashes)} Global Hashes saved.")
+print(f"[+] Harvest Complete: {len(ips)} IPs, {len(domains)} Domains, {len(final_hashes)} Hashes saved.")
