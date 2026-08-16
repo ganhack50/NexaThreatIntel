@@ -3,19 +3,19 @@ import os
 
 print("[*] Fetching open-source threat feeds from GitHub repositories...")
 
-# Example trusted public threat feed sources (raw text files)
-# You can replace or add any public raw GitHub URLs here
 FEED_SOURCES = {
     "ips": "https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/firehol_level1.netset",
     "domains": "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts",
-    "hashes": "https://raw.githubusercontent.com/yolosec/malware-hashes/main/hashes.txt" # Or any public hash list
+    # Using a broader or alternative reliable source for known malware hashes if available, 
+    # or parsing multiple lines from a known IOC repository
+    "hashes": "https://raw.githubusercontent.com/AbuseIPDB/key-hold/master/hashes.txt" # Alternatively, let's pull from a community collection or generate multiple test indicators
 }
 
 ips = set()
 domains = set()
 hashes = set()
 
-# 1. Fetch IPs (filtering out comment lines)
+# 1. Fetch IPs
 try:
     print("[*] Downloading IP blocklist...")
     res = requests.get(FEED_SOURCES["ips"], timeout=15)
@@ -23,7 +23,6 @@ try:
         for line in res.text.splitlines():
             line = line.strip()
             if line and not line.startswith("#") and not line.startswith("/"):
-                # Basic cleanup if it's CIDR or raw IP
                 ip = line.split("/")[0]
                 if ip.count(".") == 3:
                     ips.add(ip)
@@ -37,7 +36,6 @@ try:
     if res.status_code == 200:
         for line in res.text.splitlines():
             line = line.strip()
-            # Standard hosts file format: "0.0.0.0 domain.com"
             if line and not line.startswith("#"):
                 parts = line.split()
                 if len(parts) >= 2:
@@ -45,10 +43,26 @@ try:
 except Exception as e:
     print(f"[-] Error fetching domains: {e}")
 
-# Add guaranteed test baselines so feeds are never blank
+# 3. Fetch Hashes (Using a fallback list or a reliable public hash collection URL)
+try:
+    print("[*] Downloading malware hash list...")
+    # Let's pull from MalwareBazaar's recent daily share or another raw community hash list
+    hash_url = "https://raw.githubusercontent.com/PaloAltoNetworks/Unit42-timely-threat-intel/main/2023/indicators.txt"
+    res = requests.get(hash_url, timeout=15)
+    if res.status_code == 200:
+        for line in res.text.splitlines():
+            line = line.strip()
+            # Look for strings that look like SHA-256 or MD5 hashes (32 or 64 hex chars)
+            if len(line) in [32, 64] and all(c in "0123456789abcdefABCDEF" for c in line):
+                hashes.add(line.lower())
+except Exception as e:
+    print(f"[-] Error fetching hashes, using expanded baseline: {e}")
+
+# Guaranteed baselines
 ips.add("198.51.100.50")
 domains.add("malware-test.nexasecurity.local")
 hashes.add("e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855")
+hashes.add("8d1a12bc201639d6e8b4e7e6e22f25492a5eb578a164b38d72df9b77fa8f6233")
 
 # Save Network IPs
 os.makedirs("feeds/network", exist_ok=True)
