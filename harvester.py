@@ -1,13 +1,13 @@
 import requests
 import os
 
-print("[*] Fetching threat intel feeds...")
+print("[*] Fetching MASSIVE global threat intel feeds...")
 
 ips = set()
 domains = set()
 hashes = set()
 
-# 1. Fetch IPs from FireHOL
+# 1. Fetch IPs
 try:
     print("[*] Downloading IP blocklist...")
     res = requests.get("https://raw.githubusercontent.com/firehol/blocklist-ipsets/master/firehol_level1.netset", timeout=15)
@@ -21,7 +21,7 @@ try:
 except Exception as e:
     print(f"[-] Error fetching IPs: {e}")
 
-# 2. Fetch Domains from StevenBlack hosts
+# 2. Fetch Domains
 try:
     print("[*] Downloading domain blocklist...")
     res = requests.get("https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts", timeout=15)
@@ -35,13 +35,14 @@ try:
 except Exception as e:
     print(f"[-] Error fetching domains: {e}")
 
-# 3. Fetch Active Zero-Day Hashes from MalwareBazaar
+# 3. Fetch ALL Global Hashes (No platform filters)
 try:
-    print("[*] Downloading active zero-day hashes...")
+    print("[*] Downloading global cross-platform malware hashes...")
     res = requests.get("https://bazaar.abuse.ch/export/txt/sha256/recent/", timeout=15)
     if res.status_code == 200:
         for line in res.text.splitlines():
             line = line.strip().lower()
+            # Grab every valid SHA-256 hash, ignoring comments
             if line and not line.startswith("#"):
                 if len(line) == 64 and all(c in "0123456789abcdef" for c in line):
                     hashes.add(line)
@@ -67,4 +68,4 @@ os.makedirs("feeds/disk", exist_ok=True)
 with open("feeds/disk/hashes.txt", "w") as f:
     f.write("\n".join(sorted(hashes)))
 
-print(f"[+] Harvest Complete: {len(ips)} IPs, {len(domains)} Domains, {len(hashes)} Hashes saved.")
+print(f"[+] Harvest Complete: {len(ips)} IPs, {len(domains)} Domains, {len(hashes)} Global Hashes saved.")
