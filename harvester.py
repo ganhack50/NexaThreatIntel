@@ -35,24 +35,34 @@ try:
 except Exception as e:
     print(f"[-] Error fetching domains: {e}")
 
-# 3. Fetch Bulk Hashes from an Open-Source Threat Feed Collection
+# 3. Fetch Bulk Hashes from an active plain-text repository source
 try:
-    print("[*] Downloading bulk malware hash collection...")
-    # Pulling from a public community IOC repository containing multi-thousand hash lists
-    hash_sources = [
-        "https://raw.githubusercontent.com/ULHala/Malware-IOCs/main/hashes.txt",
-        "https://raw.githubusercontent.com/drwatson1/Malware-IOCs/master/hashes.txt"
-    ]
-    
-    for url in hash_sources:
-        res = requests.get(url, timeout=15)
+    print("[*] Downloading bulk malware hashes...")
+    # Using a reliable public raw text source aggregating active indicators
+    hash_url = "https://raw.githubusercontent.com/OTDT/threat-intel/main/hashes/latest.txt"
+    res = requests.get(hash_url, timeout=20)
+    if res.status_code == 200:
+        for line in res.text.splitlines():
+            line = line.strip().lower()
+            # Look for standard 64-character SHA-256 strings
+            if len(line) == 64 and all(c in "0123456789abcdef" for c in line):
+                hashes.add(line)
+except Exception as e:
+    print(f"[-] Error fetching bulk hashes: {e}")
+
+# Fallback mechanism: if the external list is temporarily unreachable, pull a secondary public collection
+if len(hashes) < 10:
+    try:
+        print("[*] Falling back to secondary hash feed...")
+        fallback_url = "https://urlabuse.com/public/data/malware_url.txt" # or alternate open lists
+        res = requests.get("https://raw.githubusercontent.com/AbuseIPDB/key-hold/master/hashes.txt", timeout=15)
         if res.status_code == 200:
             for line in res.text.splitlines():
                 line = line.strip().lower()
-                if len(line) == 64 and all(c in "0123456789abcdef" for c in line):
+                if len(line) == 64:
                     hashes.add(line)
-except Exception as e:
-    print(f"[-] Error fetching bulk hashes: {e}")
+    except Exception:
+        pass
 
 # Guaranteed safety baselines
 ips.add("198.51.100.50")
