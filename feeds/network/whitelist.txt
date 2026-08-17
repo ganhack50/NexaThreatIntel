@@ -1,0 +1,2 @@
+app-measurement.com
+firebaseinstallations.googleapis.com
