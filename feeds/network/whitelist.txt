@@ -4,3 +4,8 @@ beacons.gcp.gvt2.com
 .gvt2.com
 .googleapis.com
 .googlevideo.com
+beacons.gcp.gvt2.com
+.gvt2.com
+.googleapis.com
+.googlevideo.com
+.google-analytics.com
