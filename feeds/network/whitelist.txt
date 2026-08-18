@@ -1,2 +1,6 @@
 app-measurement.com
 firebaseinstallations.googleapis.com
+beacons.gcp.gvt2.com
+.gvt2.com
+.googleapis.com
+.googlevideo.com
