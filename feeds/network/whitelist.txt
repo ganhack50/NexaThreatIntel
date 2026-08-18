@@ -14,3 +14,4 @@ beacons.gcp.gvt2.com
 .googleapis.com
 .googlevideo.com
 .google-analytics.com
+www.google-analytics.com
