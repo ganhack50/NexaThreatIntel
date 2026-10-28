@@ -1,23 +1,55 @@
 name: Global Multi-Vector Intel Harvester
+
 on:
   schedule:
     - cron: '0 */4 * * *'
+  push:
+    branches: [ main ]
+    paths:
+      - 'harvester.py'
+      - '.github/workflows/**'
   workflow_dispatch:
+
 jobs:
   harvest:
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - name: Checkout Repository (with existing N-1 feeds)
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      - run: pip install requests
-      - run: python harvester.py
-      - run: |
+
+      - name: Restore N-1 Raw Feed Cache
+        uses: actions/cache@v4
+        with:
+          path: cache/raw
+          key: nexa-raw-intel-${{ github.run_id }}
+          restore-keys: |
+            nexa-raw-intel-
+
+      - name: Install Dependencies
+        run: pip install requests
+
+      - name: Run Incremental Threat Harvester
+        env:
+          ABUSECH_API_KEY: ${{ secrets.ABUSECH_API_KEY }}
+        run: python harvester.py
+
+      - name: Commit and Push Updated Feeds
+        run: |
           git config --global user.name "Nexa SOC Bot"
           git config --global user.email "soc@nexasecurity.com"
           git add feeds/
-          git commit -m "update: synced global multi-vector IOC feeds" || exit 0
-          git push
+          if git diff --staged --quiet; then
+            echo "[*] No new IOC deltas detected."
+          else
+            git commit -m "update: synced global multi-vector IOC feeds"
+            git pull origin main --rebase
+            git push origin main
+          fi
+          
