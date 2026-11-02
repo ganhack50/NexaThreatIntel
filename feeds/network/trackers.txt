@@ -27570,7 +27570,6 @@ ipkobi.oumarea.xyz
 ipkobiznes-bp.pl.web.do
 ipkobiznes-online.pl.web.do
 ipkobiznes-pl.banco-ctt-2026.com
-ipkobiznes-pl.onoriki-meibokuten.com
 ipkobiznes-pl.oumarea.xyz
 ipkobiznes.app
 ipkobiznes.co
