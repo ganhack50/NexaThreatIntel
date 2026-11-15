@@ -116,11 +116,18 @@ for url, cache_name in ip_sources:
         for line in raw_ips.decode("utf-8", errors="ignore").splitlines():
             line = line.strip()
             if line and not line.startswith(("#", "/", ";")):
-                raw_entry = line.split()[0].strip()  # Grab the IP/CIDR, ignore any trailing spaces/comments
-                ip_part = raw_entry.split("/")[0]    # Isolate just the IP part for validation
+                # Extract the first column (the IP or IP/CIDR string)
+                raw_entry = line.split()[0].strip()
                 
+                # Validate by checking the IP portion only
+                ip_part = raw_entry.split("/")[0]
                 if ip_part.count(".") == 3:
-                    ips.add(raw_entry)               # Add the full entry (with the /CIDR mask) to the set
+                    # If it has a CIDR mask, add the full string
+                    if "/" in raw_entry:
+                        ips.add(raw_entry)
+                    # Otherwise, add it as a single IP
+                    else:
+                        ips.add(raw_entry)
 
 # 2. Fetch Trackers & Ad Domains (StevenBlack)
 print("[*] Syncing tracker & ad blocklist...")
