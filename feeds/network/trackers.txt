@@ -39943,7 +39943,6 @@ olx.payu-confirmation.shop
 olx.payu-nitro-pl.eu.cc
 olx.payu-nitro1.eu.cc
 olx.payu-nitro2.eu.cc
-olx.payu-poland-run.bond
 olx.payu-polandcore.bond
 olx.payx-polandcore.biz.id
 olx.payx-polandcore.shop
