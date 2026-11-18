@@ -43632,7 +43632,6 @@ poczta-pl.xzona.shop
 poczta-polska.central-pay.shop
 poczta-polska.confirm95815910.shop
 poczta-polska.paupay-pl.eu.cc
-poczta-polska.paycore-my3.shop
 poczta-polska.payflow-poland2.shop
 poczta-polska.paypau-pl4.eu.cc
 poczta-polska.paypay-pl1.eu.cc
